@@ -1,0 +1,40 @@
+services:
+  flyway-bootstrap:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: triggers-flyway-bootstrap
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MSSQL_HOST: "${MSSQL_HOST:-host.docker.internal}"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Admin@1234!}"
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        for i in {1..30}; do
+          /opt/mssql-tools/bin/sqlcmd -S "$$MSSQL_HOST" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" && break
+          echo "waiting for SQL Server ($$i/30)..."; sleep 2
+        done
+        /opt/mssql-tools/bin/sqlcmd -S "$$MSSQL_HOST" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q \
+          "IF DB_ID('triggerdb') IS NULL CREATE DATABASE triggerdb;"
+
+  flyway:
+    image: flyway/flyway:10
+    container_name: triggers-flyway
+    depends_on:
+      flyway-bootstrap:
+        condition: service_completed_successfully
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      FLYWAY_URL: "jdbc:sqlserver://${MSSQL_HOST:-host.docker.internal}:1433;databaseName=triggerdb;encrypt=true;trustServerCertificate=true"
+      FLYWAY_USER: sa
+      FLYWAY_PASSWORD: "${MSSQL_SA_PASSWORD:-Admin@1234!}"
+      FLYWAY_SCHEMAS: dbo
+      FLYWAY_DEFAULT_SCHEMA: dbo
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_CONNECT_RETRIES: "20"
+    volumes:
+      - ./triggers.db/container/migrations:/flyway/sql
+      - ./triggers.db/container/conf:/flyway/conf
+    command: migrate
