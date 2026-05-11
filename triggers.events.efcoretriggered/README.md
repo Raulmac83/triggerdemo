@@ -57,6 +57,92 @@ public class NotifyOnOrderChange : IAfterSaveTrigger<Order>
 }
 ```
 
+## Single-entity vs multi-entity triggers
+
+This package ships two base classes on top of the raw `IAfterSaveTrigger<TEntity>` API to
+make the common patterns shorter and let one trigger watch a *list* of entity types in a
+single class.
+
+### Single entity — `EntityTrigger<TEntity>`
+
+```csharp
+public class NotifyOrder : EntityTrigger<Order>
+{
+    private readonly INotifier _notifier;
+    public NotifyOrder(INotifier n) => _notifier = n;
+
+    protected override Task OnChangedAsync(
+        EntityChangeKind kind,
+        Order entity,
+        Order? unmodifiedEntity,
+        CancellationToken ct)
+    {
+        return _notifier.SendAsync($"Order #{entity.Id} {kind}", ct);
+    }
+}
+
+// registration
+builder.Services.AddEfCoreTriggeredEvents()
+    .AddEntityTrigger<NotifyOrder>();
+```
+
+`unmodifiedEntity` is the prior-values snapshot (same as
+`ITriggerContext.UnmodifiedEntity`) — handy for diffing.
+
+`AddEntityTrigger<T>()` is an alias for `AddAfterSaveTrigger<T>()`; the underlying
+EFCoreTriggered pipeline discovers every `IAfterSaveTrigger<X>` the class implements, so
+the same call works for single- and multi-entity triggers.
+
+### Multi-entity — `EntityTrigger<T1, T2[, T3, T4]>`
+
+```csharp
+public class NotifyAny : EntityTrigger<Order, User, Trigger>
+{
+    protected override Task OnChangedAsync(
+        EntityChangeKind kind,
+        object entity,
+        object? unmodifiedEntity,
+        CancellationToken ct)
+    {
+        var label = entity switch
+        {
+            Order o   => $"Order #{o.Id}",
+            User u    => $"User {u.Username}",
+            Trigger t => $"Trigger '{t.Name}'",
+            _         => entity.GetType().Name,
+        };
+        Console.WriteLine($"{label} {kind}");
+        return Task.CompletedTask;
+    }
+}
+
+builder.Services.AddEfCoreTriggeredEvents()
+    .AddEntityTrigger<NotifyAny>();
+```
+
+The handler receives the changed entity as `object`; pattern-match if you need typed
+access. C# doesn't have variadic generics, so generic overloads exist for 1, 2, 3, and 4
+types. For 5+, derive directly from `MultiEntityTriggerBase` and override `WatchedTypes`:
+
+```csharp
+public class WatchEverything : MultiEntityTriggerBase
+{
+    protected override IReadOnlyList<Type> WatchedTypes { get; } =
+        new[] { typeof(A), typeof(B), typeof(C), typeof(D), typeof(E), typeof(F) };
+
+    protected override Task OnChangedAsync(
+        EntityChangeKind kind, object entity,
+        object? unmodifiedEntity, CancellationToken ct)
+    {
+        // ...
+    }
+}
+```
+
+Under the hood, multi-entity triggers implement `IAfterSaveTrigger<object>` — EFCoreTriggered
+treats `<object>` as a wildcard and fires for every entity type. The base class filters
+internally by `WatchedTypes` so only the entities you listed reach `OnChangedAsync`.
+
 ## Semantics
 
 - Triggers fire in registration order; one trigger can write changes that cascade into another.

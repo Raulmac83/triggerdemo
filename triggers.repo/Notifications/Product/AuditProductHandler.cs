@@ -3,19 +3,19 @@ using triggers.events.audit;
 
 namespace triggers.repo.Notifications;
 
-public class AuditTriggerHandler : IAuditTriggerHandler
+public class AuditProductHandler : IAuditTriggerHandler
 {
     private readonly INotificationWriter _writer;
     private readonly ITriggerMethodSelector _selector;
 
-    public AuditTriggerHandler(INotificationWriter writer, ITriggerMethodSelector selector)
+    public AuditProductHandler(INotificationWriter writer, ITriggerMethodSelector selector)
     {
         _writer = writer;
         _selector = selector;
     }
 
     public bool ShouldHandle(AuditTriggerEvent evt)
-        => evt.EntityName.EndsWith(".Trigger", StringComparison.Ordinal) || evt.EntityName == "Trigger";
+        => evt.EntityName.EndsWith(".Product", StringComparison.Ordinal) || evt.EntityName == "Product";
 
     public Task HandleAsync(AuditTriggerEvent evt, CancellationToken ct)
     {
@@ -41,10 +41,10 @@ public class AuditTriggerHandler : IAuditTriggerHandler
 
         return _writer.WriteAsync(new NotificationInput(
             TriggerMethodNames.AuditNet,
-            $"Trigger{evt.Action}",
-            "Trigger",
+            $"Product{evt.Action}",
+            "Product",
             entityId,
-            $"Trigger '{name}' {verb}",
+            $"Product '{name}' {verb}",
             "Captured by Audit.NET.",
             JsonSerializer.Serialize(new
             {

@@ -23,6 +23,15 @@ public sealed class EfCoreTriggeredBuilder
         _services.AddScoped<TTrigger>();
         return this;
     }
+
+    /// <summary>
+    /// Registers a class derived from <see cref="EntityTrigger{TEntity}"/> or
+    /// <see cref="MultiEntityTriggerBase"/> (e.g. <c>EntityTrigger&lt;T1,T2&gt;</c>). The
+    /// underlying EFCoreTriggered pipeline discovers every <c>IAfterSaveTrigger&lt;T&gt;</c>
+    /// the type implements, so the same call works for single- and multi-entity triggers.
+    /// </summary>
+    public EfCoreTriggeredBuilder AddEntityTrigger<TTrigger>() where TTrigger : class
+        => AddAfterSaveTrigger<TTrigger>();
 }
 
 public static class DependencyInjection

@@ -98,6 +98,8 @@ public class EntityChangeInterceptor : SaveChangesInterceptor
     private async Task DispatchAsync(IReadOnlyList<CapturedChange> changes, CancellationToken ct)
     {
         using var scope = _rootProvider.CreateScope();
+        var wildcardHandlers = scope.ServiceProvider.GetServices<IAnyEntityChangeHandler>().ToArray();
+
         foreach (var change in changes)
         {
             var openType = typeof(IEntityChangeHandler<>).MakeGenericType(change.EntityClrType);
@@ -111,6 +113,15 @@ public class EntityChangeInterceptor : SaveChangesInterceptor
                 var method = openType.GetMethod(nameof(IEntityChangeHandler<object>.HandleAsync))!;
                 var task = (Task)method.Invoke(handler, new[] { changeInstance, ct })!;
                 await task.ConfigureAwait(false);
+            }
+
+            if (wildcardHandlers.Length > 0)
+            {
+                var any = new AnyEntityChange(change.Type, change.EntityClrType, change.Entity, change.Modified);
+                foreach (var handler in wildcardHandlers)
+                {
+                    await handler.HandleAsync(any, ct).ConfigureAwait(false);
+                }
             }
         }
     }

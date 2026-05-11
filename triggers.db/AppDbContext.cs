@@ -22,6 +22,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Trigger> Triggers { get; set; }
 
+    public virtual DbSet<Product> Products { get; set; }
+
+    public virtual DbSet<Customer> Customers { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserRole> UserRoles { get; set; }
@@ -118,6 +122,29 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Name).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasIndex(e => e.Name, "IX_Products_Name");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Name).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.Sku).HasMaxLength(50);
+            entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.HasIndex(e => e.Name, "IX_Customers_Name");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Name).HasMaxLength(200);
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.Phone).HasMaxLength(50);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<User>(entity =>

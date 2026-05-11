@@ -22,6 +22,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import BoltIcon from '@mui/icons-material/Bolt';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import PeopleIcon from '@mui/icons-material/People';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import TuneIcon from '@mui/icons-material/Tune';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -35,6 +37,8 @@ const STORAGE_KEY = 'triggers.sidebar.collapsed';
 const navItems = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
   { label: 'Triggers', path: '/triggers', icon: <BoltIcon /> },
+  { label: 'Products', path: '/products', icon: <Inventory2Icon /> },
+  { label: 'Customers', path: '/customers', icon: <PeopleIcon /> },
   { label: 'Notifications', path: '/notifications', icon: <NotificationsIcon /> },
   { label: 'Trigger Method', path: '/methods', icon: <TuneIcon /> },
   { label: 'Docs', path: '/docs', icon: <MenuBookIcon /> },

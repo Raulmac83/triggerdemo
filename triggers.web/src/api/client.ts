@@ -189,3 +189,99 @@ export async function clearNotifications(): Promise<number> {
   const body = (await res.json()) as { deleted: number };
   return body.deleted;
 }
+
+// --- Products ---
+export interface Product {
+  id: number;
+  name: string;
+  description?: string | null;
+  sku?: string | null;
+  price: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ProductInput {
+  name: string;
+  description?: string | null;
+  sku?: string | null;
+  price: number;
+  isActive: boolean;
+}
+
+export async function fetchProducts(): Promise<Product[]> {
+  const res = await apiFetch('/api/products');
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchProduct(id: number): Promise<Product> {
+  const res = await apiFetch(`/api/products/${id}`);
+  if (res.status === 404) throw new Error('Product not found');
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const res = await apiFetch('/api/products', { method: 'POST', body: JSON.stringify(input) });
+  if (!res.ok) throw new Error(await readError(res, 'Failed to create product'));
+  return res.json();
+}
+
+export async function updateProduct(id: number, input: ProductInput): Promise<Product> {
+  const res = await apiFetch(`/api/products/${id}`, { method: 'PUT', body: JSON.stringify(input) });
+  if (!res.ok) throw new Error(await readError(res, 'Failed to update product'));
+  return res.json();
+}
+
+export async function deleteProduct(id: number): Promise<void> {
+  const res = await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 204) throw new Error(await readError(res, 'Failed to delete product'));
+}
+
+// --- Customers ---
+export interface Customer {
+  id: number;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface CustomerInput {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  isActive: boolean;
+}
+
+export async function fetchCustomers(): Promise<Customer[]> {
+  const res = await apiFetch('/api/customers');
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchCustomer(id: number): Promise<Customer> {
+  const res = await apiFetch(`/api/customers/${id}`);
+  if (res.status === 404) throw new Error('Customer not found');
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+export async function createCustomer(input: CustomerInput): Promise<Customer> {
+  const res = await apiFetch('/api/customers', { method: 'POST', body: JSON.stringify(input) });
+  if (!res.ok) throw new Error(await readError(res, 'Failed to create customer'));
+  return res.json();
+}
+
+export async function updateCustomer(id: number, input: CustomerInput): Promise<Customer> {
+  const res = await apiFetch(`/api/customers/${id}`, { method: 'PUT', body: JSON.stringify(input) });
+  if (!res.ok) throw new Error(await readError(res, 'Failed to update customer'));
+  return res.json();
+}
+
+export async function deleteCustomer(id: number): Promise<void> {
+  const res = await apiFetch(`/api/customers/${id}`, { method: 'DELETE' });
+  if (!res.ok && res.status !== 204) throw new Error(await readError(res, 'Failed to delete customer'));
+}
